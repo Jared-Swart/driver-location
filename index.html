@@ -51,22 +51,25 @@
         });
 
         let lastSent = 0;
-        function sendLocation(position) {
-            const now = Date.now();
-            if (now - lastSent < updateInterval) return; // Throttle updates
-
-            const { latitude: lat, longitude: lng } = position.coords;
-            const timestamp = new Date().toISOString();
-            status.textContent = `Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;
-
-            fetch(serverUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ lat, lng, timestamp })
-            }).catch(err => console.error('Send error:', err));
-
-            lastSent = now;
-        }
+            function sendLocation(position) {
+                const now = Date.now();
+                if (now - lastSent < updateInterval) return; // Throttle updates
+            
+                const { latitude: lat, longitude: lng } = position.coords;
+                const timestamp = new Date().toISOString();
+                status.textContent = `Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;
+            
+                fetch(serverUrl, {
+                    method: 'POST',
+                    mode: 'no-cors', // Bypass CORS
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lat, lng, timestamp })
+                })
+                .then(() => console.log('Data sent (no-cors)'))
+                .catch(err => console.error('Send error:', err));
+            
+                lastSent = now;
+            }
     </script>
 </body>
 </html>
