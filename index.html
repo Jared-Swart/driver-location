@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Tracker</title>
+    <style>
+        body { font-family: sans-serif; margin: 10px; text-align: center; }
+        button { padding: 10px; margin: 5px; }
+        #status { font-size: 14px; color: #333; }
+    </style>
+</head>
+<body>
+    <h1>Driver Location</h1>
+    <button id="startBtn">Start</button>
+    <button id="stopBtn" disabled>Stop</button>
+    <p id="status">Not tracking</p>
+    <script>
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const status = document.getElementById('status');
+        let watchId = null;
+
+        // Replace with your Google Apps Script Web App URL
+        const serverUrl = 'https://script.google.com/macros/s/AKfycbw3CbohN_zLk9DT3RYFVyik95a8RYjpWLb3v02u0Jldc6qcVNEk855frU4FdHN6hC9Dxw/exec';
+        const updateInterval = 30000; // 30 seconds (adjustable)
+
+        startBtn.addEventListener('click', () => {
+            if (!navigator.geolocation) {
+                status.textContent = 'Geolocation not supported';
+                return;
+            }
+            status.textContent = 'Requesting permission...';
+            watchId = navigator.geolocation.watchPosition(
+                sendLocation,
+                (err) => status.textContent = `Error: ${err.message}`,
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+        });
+
+        stopBtn.addEventListener('click', () => {
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                status.textContent = 'Not tracking';
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+            }
+        });
+
+        let lastSent = 0;
+        function sendLocation(position) {
+            const now = Date.now();
+            if (now - lastSent < updateInterval) return; // Throttle updates
+
+            const { latitude: lat, longitude: lng } = position.coords;
+            const timestamp = new Date().toISOString();
+            status.textContent = `Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;
+
+            fetch(serverUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lat, lng, timestamp })
+            }).catch(err => console.error('Send error:', err));
+
+            lastSent = now;
+        }
+    </script>
+</body>
+</html>
